@@ -14,9 +14,14 @@ export type PartFormValues = {
   note: string;
 };
 
+type FormState = Omit<PartFormValues, "unitPrice" | "minStock"> & {
+  unitPrice: number | "";
+  minStock: number | "";
+};
+
 export function PartForm({ initial }: { initial?: PartFormValues }) {
   const router = useRouter();
-  const [values, setValues] = useState<PartFormValues>(
+  const [values, setValues] = useState<FormState>(
     initial ?? {
       name: "",
       partNumber: "",
@@ -31,20 +36,29 @@ export function PartForm({ initial }: { initial?: PartFormValues }) {
   const [busy, setBusy] = useState(false);
   const isEdit = Boolean(initial?.id);
 
-  function set<K extends keyof PartFormValues>(k: K, v: PartFormValues[K]) {
+  function set<K extends keyof FormState>(k: K, v: FormState[K]) {
     setValues((s) => ({ ...s, [k]: v }));
   }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (values.unitPrice === "") {
+      setError("単価を入力してください");
+      return;
+    }
     setBusy(true);
     setError(null);
+    const payload = {
+      ...values,
+      unitPrice: values.unitPrice,
+      minStock: values.minStock === "" ? 0 : values.minStock,
+    };
     const url = isEdit ? `/api/parts/${initial?.id}` : "/api/parts";
     const method = isEdit ? "PATCH" : "POST";
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
+      body: JSON.stringify(payload),
     });
     setBusy(false);
     if (!res.ok) {
@@ -98,9 +112,13 @@ export function PartForm({ initial }: { initial?: PartFormValues }) {
           type="number"
           min={0}
           step={1}
+          inputMode="numeric"
           className={inputCls}
           value={values.unitPrice}
-          onChange={(e) => set("unitPrice", Number(e.target.value))}
+          onChange={(e) => {
+            const v = e.target.value;
+            set("unitPrice", v === "" ? "" : Number(v));
+          }}
         />
       </Field>
       <Field label="メーカー名">
@@ -122,9 +140,13 @@ export function PartForm({ initial }: { initial?: PartFormValues }) {
           type="number"
           min={0}
           step={1}
+          inputMode="numeric"
           className={inputCls}
           value={values.minStock}
-          onChange={(e) => set("minStock", Number(e.target.value))}
+          onChange={(e) => {
+            const v = e.target.value;
+            set("minStock", v === "" ? "" : Number(v));
+          }}
         />
       </Field>
       <Field label="メモ・備考">

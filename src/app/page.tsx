@@ -40,7 +40,8 @@ export default async function PartsListPage({
       ) : (
         <ul className="divide-y divide-gray-200 dark:divide-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-950">
           {parts.map((p) => {
-            const low = p.stock < p.minStock;
+            const negative = p.stock < 0;
+            const low = !negative && p.stock < p.minStock;
             return (
               <li key={p.id}>
                 <Link
@@ -58,7 +59,7 @@ export default async function PartsListPage({
                   <div className="text-right shrink-0">
                     <div
                       className={`text-lg font-bold ${
-                        low ? "text-red-600" : ""
+                        negative || low ? "text-red-600" : ""
                       }`}
                     >
                       {p.stock}
@@ -67,11 +68,15 @@ export default async function PartsListPage({
                     <div className="text-xs text-gray-500">
                       ¥{p.unitPrice.toLocaleString("ja-JP")}
                     </div>
-                    {low && (
+                    {negative ? (
+                      <span className="inline-block mt-1 text-[10px] bg-red-600 text-white px-1.5 py-0.5 rounded">
+                        在庫マイナス
+                      </span>
+                    ) : low ? (
                       <span className="inline-block mt-1 text-[10px] bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 px-1.5 py-0.5 rounded">
                         最低在庫割れ
                       </span>
-                    )}
+                    ) : null}
                   </div>
                 </Link>
               </li>

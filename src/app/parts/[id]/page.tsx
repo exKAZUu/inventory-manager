@@ -24,7 +24,8 @@ export default async function PartDetailPage({
     }),
   ]);
 
-  const low = stock < part.minStock;
+  const negative = stock < 0;
+  const low = !negative && stock < part.minStock;
 
   return (
     <div className="p-4 sm:p-6 max-w-3xl mx-auto">
@@ -42,7 +43,11 @@ export default async function PartDetailPage({
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <Stat label="現在在庫" value={`${stock} 個`} highlight={low} />
+        <Stat
+          label="現在在庫"
+          value={`${stock} 個`}
+          highlight={negative || low}
+        />
         <Stat label="最低在庫" value={`${part.minStock} 個`} />
         <Stat label="単価" value={`¥${part.unitPrice.toLocaleString("ja-JP")}`} />
         <Stat
@@ -51,9 +56,15 @@ export default async function PartDetailPage({
         />
       </div>
 
+      {negative && (
+        <p className="mb-4 text-sm bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-md p-3">
+          ⚠ 在庫がマイナスです。入庫の記録漏れや棚卸のズレが疑われます。
+        </p>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-        <MovementDialog partId={part.id} type="IN" />
-        <MovementDialog partId={part.id} type="OUT" />
+        <MovementDialog partId={part.id} type="IN" currentStock={stock} />
+        <MovementDialog partId={part.id} type="OUT" currentStock={stock} />
       </div>
 
       <section className="mb-6">

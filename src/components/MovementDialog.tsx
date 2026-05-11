@@ -6,13 +6,15 @@ import { useState } from "react";
 export function MovementDialog({
   partId,
   type,
+  currentStock,
 }: {
   partId: string;
   type: "IN" | "OUT";
+  currentStock: number;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState<number | "">(1);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,13 +25,26 @@ export function MovementDialog({
       ? "bg-green-600 hover:bg-green-700"
       : "bg-orange-600 hover:bg-orange-700";
 
+  const qtyNum = typeof quantity === "number" ? quantity : 0;
+  const willGoNegative = type === "OUT" && qtyNum > 0 && qtyNum > currentStock;
+
   async function submit() {
+    if (qtyNum < 1) return;
+    if (willGoNegative) {
+      const after = currentStock - qtyNum;
+      const ok = confirm(
+        `現在在庫 ${currentStock} 個に対して ${qtyNum} 個の出庫です。\n` +
+          `記録後の在庫は ${after} 個（マイナス）になります。\n\n` +
+          `このまま記録しますか？`,
+      );
+      if (!ok) return;
+    }
     setBusy(true);
     setError(null);
     const res = await fetch(`/api/parts/${partId}/movements`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, quantity, reason }),
+      body: JSON.stringify({ type, quantity: qtyNum, reason }),
     });
     setBusy(false);
     if (!res.ok) {
@@ -58,18 +73,34 @@ export function MovementDialog({
             <h2 className="text-lg font-bold mb-3">
               {type === "IN" ? "入庫" : "出庫"}を記録
             </h2>
-            <label className="block text-sm mb-1">数量</label>
+            <label className="block text-sm mb-1" htmlFor="movement-qty">
+              数量
+            </label>
             <input
+              id="movement-qty"
               type="number"
               min={1}
               step={1}
+              inputMode="numeric"
               value={quantity}
-              onChange={(e) => setQuantity(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-transparent mb-3"
+              onChange={(e) => {
+                const v = e.target.value;
+                setQuantity(v === "" ? "" : Number(v));
+              }}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-transparent mb-1"
               autoFocus
             />
-            <label className="block text-sm mb-1">理由・メモ（任意）</label>
+            {willGoNegative && (
+              <p className="text-xs text-amber-700 dark:text-amber-300 mb-2">
+                ⚠ 現在在庫 {currentStock} 個を超えています。記録後は{" "}
+                {currentStock - qtyNum} 個になります。
+              </p>
+            )}
+            <label className="block text-sm mb-1 mt-2" htmlFor="movement-reason">
+              理由・メモ（任意）
+            </label>
             <textarea
+              id="movement-reason"
               rows={2}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
@@ -88,7 +119,7 @@ export function MovementDialog({
               <button
                 type="button"
                 onClick={submit}
-                disabled={busy || quantity < 1}
+                disabled={busy || qtyNum < 1}
                 className={`${color} flex-1 text-white py-2 rounded-md font-semibold disabled:opacity-50`}
               >
                 {busy ? "保存中..." : "記録する"}
