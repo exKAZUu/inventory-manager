@@ -1,16 +1,23 @@
 node_modules/
-.next/
-out/
-build/
 dist/
+.playwright-cli/
+build/
 *.log
+.DS_Store
 .env.local
 .env*.local
-.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+backend/.venv/
+backend/staticfiles/
 
 # SQLite (local dev)
-prisma/dev.db
-prisma/dev.db-journal
-data/
+*.sqlite3
+*.sqlite3-journal
 *.sqlite
 *.sqlite-journal
+data/

@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/components/movementdialog.tsx","./src/components/nav.tsx","./src/lib/api.ts","./src/lib/auth.tsx","./src/pages/historypage.tsx","./src/pages/loginpage.tsx","./src/pages/partdetailpage.tsx","./src/pages/partformpage.tsx","./src/pages/partslistpage.tsx"],"version":"5.9.3"}
