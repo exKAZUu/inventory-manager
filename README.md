@@ -41,10 +41,16 @@ pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver   # http://localhost:8000
 
-# 3. フロントエンド（別ターミナル）
+# 3. フロントエンド
 cd frontend
 npm install
-npm run dev                  # http://localhost:5173
+npm run dev                  # http://localhost:5173 (Vite のみ)
+```
+
+Django と Vite をまとめて起動したい場合は `frontend/` で:
+
+```bash
+npm run dev:all              # Django + Vite を同時起動 (Ctrl-C で両方停止)
 ```
 
 開発時は Vite が `http://localhost:5173` を提供し、`/api/*` へのリクエストを Django (8000) にプロキシします。ログイン画面では `.env` の `APP_PASSWORD` を入力してください。
