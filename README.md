@@ -29,41 +29,41 @@ scripts/    Railway 上で使うバックアップスクリプトなど
 
 依存ツール: Python 3.11+, Node.js 20+
 
+リポジトリは npm workspaces によるモノレポ構成で、ルートからすべての操作を行えます。
+
 ```bash
 # 1. 環境変数を準備
-cp .env.example .env   # 必要に応じて値を編集
+cp .env.example .env
 
-# 2. バックエンド
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver   # http://localhost:8000
+# 2. 初期セットアップ（一度だけ）
+npm install                  # frontend を含む依存をインストール
+npm run setup:backend        # backend/.venv 作成 & pip install
+npm run migrate              # SQLite 初期化
 
-# 3. フロントエンド
-cd frontend
-npm install
-npm run dev                  # http://localhost:5173 (Vite のみ)
+# 3. 開発サーバを起動（Django + Vite を同時起動）
+npm run dev                  # http://localhost:5173 を開く
 ```
 
-Django と Vite をまとめて起動したい場合は `frontend/` で:
+Ctrl-C で両プロセスが停止します。ログには `[django]` / `[vite]` のプレフィクスが付きます。Vite が `/api/*` を Django (8000) にプロキシするため、ブラウザは 5173 にのみアクセスしてください。ログイン画面では `.env` の `APP_PASSWORD` を入力します。
 
-```bash
-npm run dev:all              # Django + Vite を同時起動 (Ctrl-C で両方停止)
-```
+### よく使うコマンド (ルートから)
 
-開発時は Vite が `http://localhost:5173` を提供し、`/api/*` へのリクエストを Django (8000) にプロキシします。ログイン画面では `.env` の `APP_PASSWORD` を入力してください。
+| コマンド | 説明 |
+|---|---|
+| `npm run dev` | Django + Vite を同時起動 |
+| `npm run dev:backend` | Django だけ起動 |
+| `npm run dev:frontend` | Vite だけ起動 |
+| `npm run build` | フロントエンドをビルドし、Django の静的ファイルを収集 |
+| `npm run migrate` | DB マイグレーションを適用 |
+| `npm run start` | 本番モード起動 (migrate → gunicorn) |
 
 ## 本番ビルド & 起動
 
 ```bash
-cd frontend && npm ci && npm run build
-cd ../backend
-pip install -r requirements.txt
-python manage.py collectstatic --noinput
-python manage.py migrate --noinput
-gunicorn inventory.wsgi:application --bind 0.0.0.0:8000
+npm ci
+npm run setup:backend        # 初回のみ
+npm run build                # vite build + collectstatic
+npm run start                # migrate + gunicorn
 ```
 
 Django が `/api/*` を提供し、それ以外のすべてのパスで React の `frontend/dist/index.html` を返します（クライアントサイドルーティング）。静的アセットは WhiteNoise が配信します。

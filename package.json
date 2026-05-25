@@ -1,0 +1,17 @@
+{
+  "name": "inventory-manager",
+  "private": true,
+  "workspaces": ["frontend"],
+  "scripts": {
+    "dev": "concurrently -k -n django,vite -c blue,magenta \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "dev:backend": "cd backend && .venv/bin/python manage.py runserver 127.0.0.1:8000",
+    "dev:frontend": "npm -w frontend run dev",
+    "build": "npm -w frontend run build && cd backend && .venv/bin/python manage.py collectstatic --noinput",
+    "start": "cd backend && .venv/bin/python manage.py migrate --noinput && .venv/bin/gunicorn inventory.wsgi:application --bind 0.0.0.0:${PORT:-8000}",
+    "setup:backend": "cd backend && python -m venv .venv && .venv/bin/pip install -r requirements.txt",
+    "migrate": "cd backend && .venv/bin/python manage.py migrate"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
